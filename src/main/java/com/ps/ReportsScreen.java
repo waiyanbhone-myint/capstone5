@@ -6,15 +6,17 @@ import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
-
 public class ReportsScreen {
-    public static void main(String[] args) {
-    }
-    static boolean backToHome = false;
-    static Scanner scanner = new Scanner(System.in);
-    static String fileName = "transactions.csv";
+
+    private boolean backToHome = false;
+    private Scanner scanner = new Scanner(System.in);
+    private String fileName = "transactions.csv";
 
     public ReportsScreen() {
+        displayReportsMenu();
+    }
+
+    private void displayReportsMenu() {
         int option;
         do {
             System.out.println("\n--- Reports Menu ---\n");
@@ -24,10 +26,11 @@ public class ReportsScreen {
             System.out.println("4) Previous Year");
             System.out.println("5) Search by Vendor");
             System.out.println("0) Back to Ledger Screen");
-            System.out.println("H) Home");
             System.out.print("Enter your option: ");
 
             option = scanner.nextInt();
+            scanner.nextLine(); // Fixed: consume newline after nextInt()
+
             switch (option) {
                 case 1:
                     monthToDate();
@@ -50,42 +53,150 @@ public class ReportsScreen {
                 default:
                     System.out.println("Invalid option. Please try again.");
             }
-        } while (option != 0);
-
-
+        } while (!backToHome); // Fixed: use instance variable
     }
-    private static void monthToDate() {
+
+    private void monthToDate() {
         LocalDate today = LocalDate.now();
         int currentMonth = today.getMonthValue();
         int currentYear = today.getYear();
 
-        System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
-        System.out.println("--------------------------------------------------------------------------------");
+        System.out.println("\n--- Month To Date ---");
+        printHeader();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
+            boolean found = false;
             while ((line = reader.readLine()) != null) {
                 String[] tx = line.split("\\|");
                 if (tx.length >= 5) {
-                    LocalDate txDate = LocalDate.parse(tx[0]);
-                    if (txDate.getMonthValue() == currentMonth && txDate.getYear() == currentYear) {
-                        System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
-                                tx[0], tx[1], tx[2], tx[3], tx[4]);
+                    try {
+                        LocalDate txDate = LocalDate.parse(tx[0]);
+                        if (txDate.getMonthValue() == currentMonth && txDate.getYear() == currentYear) {
+                            System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
+                                    tx[0], tx[1], tx[2], tx[3], tx[4]);
+                            found = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing date: " + tx[0]);
                     }
                 }
+            }
+            if (!found) {
+                System.out.println("No transactions found for this month.");
             }
         } catch (IOException e) {
             System.out.println("Error reading file: " + e.getMessage());
         }
-
     }
-    private static void searchByVendor() {
-        scanner.nextLine(); // Consume leftover newline
+
+    private void previousMonth() {
+        LocalDate today = LocalDate.now();
+        LocalDate previousMonthDate = today.minusMonths(1);
+        int prevMonth = previousMonthDate.getMonthValue();
+        int prevYear = previousMonthDate.getYear();
+
+        System.out.println("\n--- Previous Month ---");
+        printHeader();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            boolean found = false;
+            while ((line = reader.readLine()) != null) {
+                String[] tx = line.split("\\|");
+                if (tx.length >= 5) {
+                    try {
+                        LocalDate txDate = LocalDate.parse(tx[0]);
+                        if (txDate.getMonthValue() == prevMonth && txDate.getYear() == prevYear) {
+                            System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
+                                    tx[0], tx[1], tx[2], tx[3], tx[4]);
+                            found = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing date: " + tx[0]);
+                    }
+                }
+            }
+            if (!found) {
+                System.out.println("No transactions found for previous month.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void yearToDate() {
+        int currentYear = LocalDate.now().getYear();
+
+        System.out.println("\n--- Year To Date ---");
+        printHeader();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            boolean found = false;
+            while ((line = reader.readLine()) != null) {
+                String[] tx = line.split("\\|");
+                if (tx.length >= 5) {
+                    try {
+                        LocalDate txDate = LocalDate.parse(tx[0]);
+                        if (txDate.getYear() == currentYear) {
+                            System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
+                                    tx[0], tx[1], tx[2], tx[3], tx[4]);
+                            found = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing date: " + tx[0]);
+                    }
+                }
+            }
+            if (!found) {
+                System.out.println("No transactions found for this year.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void previousYear() {
+        LocalDate today = LocalDate.now();
+        int prevYear = today.getYear() - 1; // Fixed: now gets actual previous year
+
+        System.out.println("\n--- Previous Year ---");
+        printHeader();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            boolean found = false;
+            while ((line = reader.readLine()) != null) {
+                String[] tx = line.split("\\|");
+                if (tx.length >= 5) {
+                    try {
+                        LocalDate txDate = LocalDate.parse(tx[0]);
+                        if (txDate.getYear() == prevYear) { // Fixed: only check year
+                            System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
+                                    tx[0], tx[1], tx[2], tx[3], tx[4]);
+                            found = true;
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error parsing date: " + tx[0]);
+                    }
+                }
+            }
+            if (!found) {
+                System.out.println("No transactions found for previous year.");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading file: " + e.getMessage());
+        }
+    }
+
+    private void searchByVendor() {
+        // Fixed: scanner.nextLine() already called in main loop
         System.out.print("Enter vendor name to search: ");
         String vendorInput = scanner.nextLine().toLowerCase();
 
-        System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
-        System.out.println("--------------------------------------------------------------------------------");
+        System.out.println("\n--- Search Results for: " + vendorInput + " ---");
+        printHeader();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
@@ -104,91 +215,10 @@ public class ReportsScreen {
         } catch (IOException e) {
             System.out.println("Error reading file: " + e.getMessage());
         }
-
     }
 
-    private static void previousYear() {
-        LocalDate today = LocalDate.now();
-        LocalDate previousMonthDate = today.minusMonths(1);
-        int prevMonth = previousMonthDate.getMonthValue();
-        int prevYear = previousMonthDate.getYear();
-
+    private void printHeader() {
         System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
         System.out.println("--------------------------------------------------------------------------------");
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] tx = line.split("\\|");
-                if (tx.length >= 5) {
-                    LocalDate txDate = LocalDate.parse(tx[0]);
-                    if (txDate.getMonthValue() == prevMonth && txDate.getYear() == prevYear) {
-                        System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
-                                tx[0], tx[1], tx[2], tx[3], tx[4]);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading file: " + e.getMessage());
-        }
     }
-
-    private static void yearToDate() {
-        int currentYear = LocalDate.now().getYear();
-
-        System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
-        System.out.println("--------------------------------------------------------------------------------");
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] tx = line.split("\\|");
-                if (tx.length >= 5) {
-                    LocalDate txDate = LocalDate.parse(tx[0]);
-                    if (txDate.getYear() == currentYear) {
-                        System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
-                                tx[0], tx[1], tx[2], tx[3], tx[4]);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading file: " + e.getMessage());
-        }
-    }
-
-    private static void previousMonth() {
-        LocalDate today = LocalDate.now();
-        LocalDate previousMonthDate = today.minusMonths(1);
-        int prevMonth = previousMonthDate.getMonthValue();
-        int prevYear = previousMonthDate.getYear();
-
-        System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
-        System.out.println("--------------------------------------------------------------------------------");
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] tx = line.split("\\|");
-                if (tx.length >= 5) {
-                    LocalDate txDate = LocalDate.parse(tx[0]);
-                    if (txDate.getMonthValue() == prevMonth && txDate.getYear() == prevYear) {
-                        System.out.printf("%-12s %-10s %-25s %-20s %10s%n",
-                                tx[0], tx[1], tx[2], tx[3], tx[4]);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading file: " + e.getMessage());
-        }
-
-
-
-
-
-
-
-    }
-
-
 }
-

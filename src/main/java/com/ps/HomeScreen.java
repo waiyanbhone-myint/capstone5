@@ -1,19 +1,12 @@
 package com.ps;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.LocalTime;
+
 import java.util.Scanner;
 
 public class HomeScreen {
 
     static Scanner scanner = new Scanner(System.in);
-    static boolean insertTransaction = true;
 
     public static void main(String[] args) {
-        boolean mainOption = true;
-
         int option;
         do {
             System.out.println("---\nWelcome to the General Ledger!\n---");
@@ -22,7 +15,7 @@ public class HomeScreen {
             System.out.println("3) Go to Ledger");
             System.out.println("4) Banking Assistant");
             System.out.println("0) Exit");
-            System.out.println(" Please enter the option: ");
+            System.out.print("Please enter the option: ");
 
             option = scanner.nextInt();
             scanner.nextLine();
@@ -45,11 +38,11 @@ public class HomeScreen {
                     break;
                 default:
                     System.out.println("Invalid. Please try again.");
-
             }
 
         } while (option != 0);
 
+        scanner.close();
     }
 
     private static void addDeposit() {
@@ -75,7 +68,8 @@ public class HomeScreen {
             }
         }
 
-        saveTransactionToFile(description, vendor, amount);
+        // Use TransactionWriter instead of saveTransactionToFile
+        TransactionWriter.saveTransactionToFile(description, vendor, amount);
         System.out.println("Deposit successful!");
         System.out.println("Thank you!");
     }
@@ -103,23 +97,10 @@ public class HomeScreen {
             }
         }
 
-        saveTransactionToFile(description, vendor, -amount);
+        // Use TransactionWriter instead of saveTransactionToFile (negative for payment)
+        TransactionWriter.saveTransactionToFile(description, vendor, -amount);
         System.out.println("Payment successful!");
         System.out.println("Thank you!");
-    }
-
-    private static void saveTransactionToFile(String description, String vendor, float amount) {
-        // Append transaction to the CSV file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("transactions.csv", true))) {
-            String date = LocalDate.now().toString();
-            String time = LocalTime.now().toString();
-
-            writer.write(date + "|" + time + "|" + description + "|" + vendor + "|" + amount);
-            writer.newLine();
-
-        } catch (IOException e) {
-            System.out.println("Error saving transaction: " + e.getMessage());
-        }
     }
 
     public static void ledgerScreen() {
@@ -129,5 +110,4 @@ public class HomeScreen {
     private static void bankingAssistant() {
         Assistant assistant = new Assistant();
     }
-
 }

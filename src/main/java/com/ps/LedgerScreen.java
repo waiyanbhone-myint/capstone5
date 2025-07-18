@@ -16,7 +16,6 @@ public class LedgerScreen {
     public LedgerScreen() {
         loadTransactionsFromFile();
         displayLedgerMenu();
-
     }
 
     private void loadTransactionsFromFile() {
@@ -31,11 +30,9 @@ public class LedgerScreen {
                         String description = parts[2].trim();
                         String vendor = parts[3].trim();
 
-                        NumberFormat format = NumberFormat.getInstance(Locale.US);
-                        Number number = format.parse(parts[4].trim());
-                        float amount = number.floatValue();
+                        float amount = Float.parseFloat(parts[4].trim());
                         transactions.add(new Transaction(date, time, description, vendor, amount));
-                    } catch (Exception e) {
+                    } catch (NumberFormatException e) {
                         System.err.println("Error parsing amount in line: " + line + " - " + e.getMessage());
                     }
                 } else {
@@ -45,7 +42,6 @@ public class LedgerScreen {
         } catch (IOException e) {
             System.err.println("Error reading file: " + fileName + " - " + e.getMessage());
             System.out.println("Please ensure the file exists and is accessible.");
-
         }
     }
 
@@ -59,7 +55,7 @@ public class LedgerScreen {
             System.out.println("3) Payments");
             System.out.println("4) Reports");
             System.out.println("0) Back to Home Screen");
-            System.out.println("Enter your option: ");
+            System.out.print("Enter your option: ");
 
             option = scanner.nextInt();
             scanner.nextLine();
@@ -124,54 +120,14 @@ public class LedgerScreen {
     private void printTransactionHeader() {
         System.out.printf("%-12s %-10s %-25s %-20s %10s%n", "Date", "Time", "Description", "Vendor", "Amount");
         System.out.println("------------------------------------------------------------------------------------");
-
     }
+
     public static class Transaction {
         private String date;
         private String time;
         private String description;
         private String vendor;
         private float amount;
-
-        public String getDate() {
-            return date;
-        }
-
-        public void setDate(String date) {
-            this.date = date;
-        }
-
-        public String getTime() {
-            return time;
-        }
-
-        public void setTime(String time) {
-            this.time = time;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getVendor() {
-            return vendor;
-        }
-
-        public void setVendor(String vendor) {
-            this.vendor = vendor;
-        }
-
-        public float getAmount() {
-            return amount;
-        }
-
-        public void setAmount(float amount) {
-            this.amount = amount;
-        }
 
         public Transaction(String date, String time, String description, String vendor, float amount) {
             this.date = date;
@@ -181,11 +137,24 @@ public class LedgerScreen {
             this.amount = amount;
         }
 
+        // Getters
+        public String getDate() { return date; }
+        public String getTime() { return time; }
+        public String getDescription() { return description; }
+        public String getVendor() { return vendor; }
+        public float getAmount() { return amount; }
+
+        // Setters
+        public void setDate(String date) { this.date = date; }
+        public void setTime(String time) { this.time = time; }
+        public void setDescription(String description) { this.description = description; }
+        public void setVendor(String vendor) { this.vendor = vendor; }
+        public void setAmount(float amount) { this.amount = amount; }
+
         @Override
         public String toString() {
-            return String.format("%-12s %-10s %-30s %-25s %10.2f",
+            return String.format("%-12s %-10s %-25s %-20s %10.2f",
                     date, time, description, vendor, amount);
         }
-
     }
 }

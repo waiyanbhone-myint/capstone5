@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class Assistant {
 
     private Scanner scanner = new Scanner(System.in);
-    private String fileName = "transaction.csv";
+    private String fileName = "transactions.csv"; // Fixed: changed from "transaction.csv"
 
     public Assistant() {
         showMenu();
@@ -30,20 +30,27 @@ public class Assistant {
             option = scanner.nextInt();
             scanner.nextLine(); // clear the line
 
-            if (option == 1) {
-                showAllTransactions();
-            } else if (option == 2) {
-                showTotalSpent();
-            } else if (option == 3) {
-                showTotalEarned();
-            } else if (option == 4) {
-                findVendor();
-            } else if (option == 5) {
-                showBiggestExpense();
-            } else if (option == 0) {
-                System.out.println("Going back...");
-            } else {
-                System.out.println("Invalid choice. Try again.");
+            switch (option) {
+                case 1:
+                    showAllTransactions();
+                    break;
+                case 2:
+                    showTotalSpent();
+                    break;
+                case 3:
+                    showTotalEarned();
+                    break;
+                case 4:
+                    findVendor();
+                    break;
+                case 5:
+                    showBiggestExpense();
+                    break;
+                case 0:
+                    System.out.println("Going back...");
+                    break;
+                default:
+                    System.out.println("Invalid choice. Try again.");
             }
 
         } while (option != 0);
@@ -52,9 +59,9 @@ public class Assistant {
     private void showAllTransactions() {
         System.out.println("\n--- All Your Transactions ---");
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
+            boolean found = false;
 
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
@@ -65,12 +72,16 @@ public class Assistant {
                     String amount = parts[4];
 
                     System.out.println(date + " | " + vendor + " | $" + amount + " | " + description);
+                    found = true;
                 }
             }
-            reader.close();
+
+            if (!found) {
+                System.out.println("No transactions found.");
+            }
 
         } catch (IOException e) {
-            System.out.println("Error reading file!");
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
@@ -79,26 +90,28 @@ public class Assistant {
 
         float totalSpent = 0;
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
                 if (parts.length == 5) {
-                    float amount = Float.parseFloat(parts[4]);
+                    try {
+                        float amount = Float.parseFloat(parts[4]);
 
-                    if (amount < 0) { // negative means you spent money
-                        totalSpent = totalSpent + Math.abs(amount); // make it positive
+                        if (amount < 0) { // negative means you spent money
+                            totalSpent = totalSpent + Math.abs(amount); // make it positive
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing amount: " + parts[4]);
                     }
                 }
             }
-            reader.close();
 
-            System.out.println("You spent: $" + totalSpent);
+            System.out.printf("You spent: $%.2f%n", totalSpent);
 
         } catch (IOException e) {
-            System.out.println("Error reading file!");
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
@@ -107,26 +120,28 @@ public class Assistant {
 
         float totalEarned = 0;
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
                 if (parts.length == 5) {
-                    float amount = Float.parseFloat(parts[4]);
+                    try {
+                        float amount = Float.parseFloat(parts[4]);
 
-                    if (amount > 0) { // positive means you earned money
-                        totalEarned = totalEarned + amount;
+                        if (amount > 0) { // positive means you earned money
+                            totalEarned = totalEarned + amount;
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing amount: " + parts[4]);
                     }
                 }
             }
-            reader.close();
 
-            System.out.println("You earned: $" + totalEarned);
+            System.out.printf("You earned: $%.2f%n", totalEarned);
 
         } catch (IOException e) {
-            System.out.println("Error reading file!");
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
@@ -138,8 +153,7 @@ public class Assistant {
 
         boolean found = false;
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -157,14 +171,13 @@ public class Assistant {
                     }
                 }
             }
-            reader.close();
 
             if (!found) {
                 System.out.println("No transactions found with that vendor.");
             }
 
         } catch (IOException e) {
-            System.out.println("Error reading file!");
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 
@@ -176,31 +189,33 @@ public class Assistant {
         String biggestVendor = "";
         String biggestDescription = "";
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
             String line;
 
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\\|");
                 if (parts.length == 5) {
-                    float amount = Float.parseFloat(parts[4]);
+                    try {
+                        float amount = Float.parseFloat(parts[4]);
 
-                    if (amount < 0) { // negative means expense
-                        float positiveAmount = Math.abs(amount);
+                        if (amount < 0) { // negative means expense
+                            float positiveAmount = Math.abs(amount);
 
-                        if (positiveAmount > biggestAmount) {
-                            biggestAmount = positiveAmount;
-                            biggestDate = parts[0];
-                            biggestVendor = parts[3];
-                            biggestDescription = parts[2];
+                            if (positiveAmount > biggestAmount) {
+                                biggestAmount = positiveAmount;
+                                biggestDate = parts[0];
+                                biggestVendor = parts[3];
+                                biggestDescription = parts[2];
+                            }
                         }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Error parsing amount: " + parts[4]);
                     }
                 }
             }
-            reader.close();
 
             if (biggestAmount > 0) {
-                System.out.println("Biggest expense: $" + biggestAmount);
+                System.out.printf("Biggest expense: $%.2f%n", biggestAmount);
                 System.out.println("Date: " + biggestDate);
                 System.out.println("Vendor: " + biggestVendor);
                 System.out.println("Description: " + biggestDescription);
@@ -209,7 +224,7 @@ public class Assistant {
             }
 
         } catch (IOException e) {
-            System.out.println("Error reading file!");
+            System.out.println("Error reading file: " + e.getMessage());
         }
     }
 }
